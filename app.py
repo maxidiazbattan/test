@@ -390,13 +390,13 @@ def build_graph(ticker, periods):
     # df_mkt = df_mkt.dropna()
 
     if periods == '1mo':
-        df_mkt=pd.read_csv('/datasets/periods_1mo.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('datasets/periods_1mo.csv', header=[0,1], index_col=0)
     elif periods == '3mo':
-        df_mkt=pd.read_csv('/datasets/periods_3mo.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('datasets/periods_3mo.csv', header=[0,1], index_col=0)
     elif periods == '6mo':
-        df_mkt=pd.read_csv('/datasets/periods_6mo.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('datasets/periods_6mo.csv', header=[0,1], index_col=0)
     else:
-        df_mkt=pd.read_csv('/datasets/periods_1y.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('datasets/periods_1y.csv', header=[0,1], index_col=0)
 
 
     fig7 = go.Figure(data=[go.Candlestick(x=df_mkt.index,
