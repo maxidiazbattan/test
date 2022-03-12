@@ -4,6 +4,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 
+import defi.defi_tools as dft
+
 import plotly.graph_objs as go
 import plotly.express as px
 from dash.dependencies import Input, Output
