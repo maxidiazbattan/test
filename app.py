@@ -12,15 +12,16 @@ import pandas as pd
 
 
 
-#def data_load():
-    
-#    df = yf.download(tickers = "BTC-USD ETH-USD BNB-USD", period = "1mo", interval = "1h")
-#    df = df['High'].reset_index().rename(columns={'index':'Date'}).sort_values(by='Date', ascending=False)
-#    df=df.dropna()
+def data_load():
+    df_btc = dft.geckoHistorical('bitcoin').reset_index()[['date','price']]
+    df_eth = dft.geckoHistorical('ethereum').reset_index()[['date','price']]
+    df_bnb = dft.geckoHistorical('binancecoin').reset_index()[['date','price']]
 
-#    return df
+    df_btc = df_btc[df_btc['date'] > '2022-01-01']
+    df_eth = df_eth[df_eth['date'] > '2022-01-01']
+    df_bnb = df_bnb[df_bnb['date'] > '2022-01-01']
 
-#df = data_load()
+    return df_btc, df_eth, df_bnb
 
 
 df = pd.read_csv('datasets/cards_tickers.csv', header=0, index_col=0)
@@ -40,11 +41,11 @@ server = app.server
 
 app.layout = dbc.Container([
     
-    dbc.Row([
+   dbc.Row([
              dbc.Col([
                       dbc.Card([
-                                dbc.CardBody([html.H2("Crypto Dashboard 📈", className='header header-title text-center text-white') ]),
-                                ], style={'borderRadius': '10px'}, className='title-card mt-1'),], width={'size':4, 'offset':0}),
+                                dbc.CardBody([html.H3("Crypto Dashboard 📈", className='header header-title text-center text-white') ]),
+                                ], style={'borderRadius': '10px'}, className='title-card'),], width={'size':4, 'offset':0}),
 
             dbc.Col([
                       dbc.Card([
@@ -56,7 +57,7 @@ app.layout = dbc.Container([
                          clearable=False,
                          style= {'borderRadius': '10px'}, className="m-1",
                         ),
-                     ]),], style={'borderRadius': '10px'}, className='dropdown-card mt-1'),], width={'size':4, 'offset':0}),
+                     ]),], style={'borderRadius': '10px'}, className='dropdown-card main-navigation'),], width={'size':4, 'offset':0}),
     
              dbc.Col([
                       dbc.Card([
@@ -68,7 +69,7 @@ app.layout = dbc.Container([
                          clearable=False,
                          style= {'borderRadius': '10px'}, className="m-1",
                         ),
-                     ]),], style={'borderRadius': '10px'}, className='dropdown-card mt-1'),], width={'size':4, 'offset':0}),
+                     ]),], style={'borderRadius': '10px'}, className='dropdown-card'),], width={'size':4, 'offset':0}),
         ], ),
 
 
@@ -97,7 +98,7 @@ app.layout = dbc.Container([
                                                       ]),
                                              ]),
                            
-                               ], style={'borderRadius': '10px'}, className="indicators-card m-1")
+                               ], style={'borderRadius': '10px'}, className="indicators-card mt-1")
                         ], width={'size':4, 'offset':0}),
 
             dbc.Col([
@@ -123,9 +124,10 @@ app.layout = dbc.Container([
                                                       ]),
                                              ]),
                            
-                               ], style={'borderRadius': '10px'}, className="indicators-card m-1")
+                               ], style={'borderRadius': '10px'}, className="indicators-card mt-1")
                         ], width={'size':4, 'offset':0}),
              
+
              dbc.Col([
                       dbc.Card([
                                 dbc.CardBody([
@@ -149,10 +151,13 @@ app.layout = dbc.Container([
                                                       ]),
                                              ]),
                            
-                               ], style={'borderRadius': '10px'}, className="indicators-card m-1 ml-0")
+                               ], style={'borderRadius': '10px'}, className="indicators-card mt-1")
                         ], width={'size':4, 'offset':0}),
-        
-        ], ),
+
+   
+        ]),
+
+
 
     
     dbc.Row([            
@@ -161,11 +166,14 @@ app.layout = dbc.Container([
                                 dbc.CardBody([
                                               dcc.Graph(id='candlestick', figure={}),
                                             ]),
-                                ], style= {'borderRadius': '10px'}, className="candlestick-card m-1"),
+                                ], style= {'borderRadius': '10px'}, className="dropdown-card mt-1"),
                      ], width={'size':12, 'offset':0})
              
             ]),
    
+    
+
+
 dcc.Interval(id='update', n_intervals=0, interval=1000*5)
 
 ], fluid=True)
@@ -179,21 +187,24 @@ dcc.Interval(id='update', n_intervals=0, interval=1000*5)
 )
 def update_graph(timer):
     
-    day_start = df[df['Date'] == df['Date'].min()]['BTC-USD'].values[0]
-    day_end = df[df['Date'] == df['Date'].max()]['BTC-USD'].values[0]
+    #day_start = df[df['Date'] == df['Date'].min()]['BTC-USD'].values[0]
+    #day_end = df[df['Date'] == df['Date'].max()]['BTC-USD'].values[0]
+
+    previous_value = df_btc.iloc[-2]['price']
+    last_value = df_btc.iloc[-1]['price']
 
     fig1 = go.Figure(go.Indicator(
         mode="delta",
-        value=day_end,
-        delta={'reference': day_start, 'relative': True, 'valueformat':'.2%'}))
+        value=last_value,
+        delta={'reference': previous_value, 'relative': True, 'valueformat':'.2%'}))
     fig1.update_traces(delta_font={'size':12})
     fig1.update_layout(height=30, width=70,
                        paper_bgcolor='rgba(0,0,0,0)',
                        plot_bgcolor='rgba(0,0,0,0)')
 
-    if day_end >= day_start:
+    if last_value >= previous_value:
         fig1.update_traces(delta_increasing_color='green')
-    elif day_end < day_start:
+    elif last_value < previous_value:
         fig1.update_traces(delta_decreasing_color='red')
 
     return fig1
@@ -205,21 +216,26 @@ def update_graph(timer):
 )
 def update_graph(timer):
     
-    day_start = df[df['Date'] == df['Date'].min()]['ETH-USD'].values[0]
-    day_end = df[df['Date'] == df['Date'].max()]['ETH-USD'].values[0]
+    #day_start = df[df['Date'] == df['Date'].min()]['price'].values[0]
+    #day_end = df[df['Date'] == df['Date'].max()]['price'].values[0]
+
+    previous_value = df_eth.iloc[-2]['price']
+    last_value = df_eth.iloc[-1]['price']
+
+
 
     fig2 = go.Figure(go.Indicator(
         mode="delta",
-        value=day_end,
-        delta={'reference': day_start, 'relative': True, 'valueformat':'.2%'}))
+        value=last_value,
+        delta={'reference': previous_value, 'relative': True, 'valueformat':'.2%'}))
     fig2.update_traces(delta_font={'size':12})
     fig2.update_layout(height=30, width=70, 
                        paper_bgcolor='rgba(0,0,0,0)',
                        plot_bgcolor='rgba(0,0,0,0)')
 
-    if day_end >= day_start:
+    if last_value >= previous_value:
         fig2.update_traces(delta_increasing_color='green')
-    elif day_end < day_start:
+    elif last_value < previous_value:
         fig2.update_traces(delta_decreasing_color='red')
 
     return fig2
@@ -231,22 +247,27 @@ def update_graph(timer):
 )
 def update_graph(timer):
     
-    day_start = df[df['Date'] == df['Date'].min()]['BNB-USD'].values[0]
-    day_end = df[df['Date'] == df['Date'].max()]['BNB-USD'].values[0]
+    #day_start = df[df['Date'] == df['Date'].min()]['price'].values[0]
+    #day_end = df[df['Date'] == df['Date'].max()]['price'].values[0]
+
+    
+    previous_value = df_bnb.iloc[-2]['price']
+    last_value = df_bnb.iloc[-1]['price']
+
 
     fig3 = go.Figure(go.Indicator(
         mode="delta",
-        value=day_end,
-        delta={'reference': day_start, 'relative': True, 'valueformat':'.2%'}))
+        value=last_value,
+        delta={'reference': previous_value, 'relative': True, 'valueformat':'.2%'}))
     fig3.update_traces(delta_font={'size':12})
     fig3.update_layout(height=30, width=70,
                        paper_bgcolor='rgba(0,0,0,0)',
                        plot_bgcolor='rgba(0,0,0,0)')
 
 
-    if day_end >= day_start:
+    if last_value >= previous_value:
         fig3.update_traces(delta_increasing_color='green')
-    elif day_end < day_start:
+    elif last_value < previous_value:
         fig3.update_traces(delta_decreasing_color='red')
 
     return fig3
@@ -259,8 +280,8 @@ def update_graph(timer):
 )
 def update_graph(timer):
     
-    fig4 = px.line(df, x='Date', y='BTC-USD',
-                   range_y=[df['BTC-USD'].min(), df['BTC-USD'].max()],
+    fig4 = px.line(df_btc, x='date', y='price',
+                   range_y=[df_btc['price'].min(), df_btc['price'].max()],
                    height=120).update_layout(margin=dict(t=0, r=0, l=0, b=20),
                                              paper_bgcolor='rgba(0,0,0,0)',
                                              plot_bgcolor='rgba(0,0,0,0)',
@@ -275,8 +296,11 @@ def update_graph(timer):
                                              showticklabels=False
                                              ))
 
-    day_start = df[df['Date'] == df['Date'].min()]['BTC-USD'].values[0]
-    day_end = df[df['Date'] == df['Date'].max()]['BTC-USD'].values[0]
+    #day_start = df[df['Date'] == df['Date'].min()]['BTC-USD'].values[0]
+    #day_end = df[df['Date'] == df['Date'].max()]['BTC-USD'].values[0]
+
+    day_start = df_btc.iloc[-2]['price']
+    day_end = df_btc.iloc[-1]['price']
 
     if day_end >= day_start:
         return fig4.update_traces(fill='tozeroy',line={'color':'green'})
@@ -284,15 +308,15 @@ def update_graph(timer):
         return fig4.update_traces(fill='tozeroy',
                              line={'color': 'red'})
 
-# Line Graph 2---------------------------------------------------------------
+# # Line Graph 2---------------------------------------------------------------
 @app.callback(
     Output('daily-line-2', 'figure'),
     Input('update', 'n_intervals')
 )
 def update_graph(timer):
     
-    fig5 = px.line(df, x='Date', y='ETH-USD',
-                   range_y=[df['ETH-USD'].min(), df['ETH-USD'].max()],
+    fig5 = px.line(df_eth, x='date', y='price',
+                   range_y=[df_eth['price'].min(), df_eth['price'].max()],
                    height=120).update_layout(margin=dict(t=0, r=0, l=0, b=20),
                                              paper_bgcolor='rgba(0,0,0,0)',
                                              plot_bgcolor='rgba(0,0,0,0)',
@@ -307,8 +331,8 @@ def update_graph(timer):
                                              showticklabels=False
                                              ))
 
-    day_start = df[df['Date'] == df['Date'].min()]['ETH-USD'].values[0]
-    day_end = df[df['Date'] == df['Date'].max()]['ETH-USD'].values[0]
+    day_start = df_eth.iloc[-2]['price']
+    day_end = df_eth.iloc[-1]['price']
 
     if day_end >= day_start:
         return fig5.update_traces(fill='tozeroy',line={'color':'green'})
@@ -323,8 +347,8 @@ def update_graph(timer):
 )
 def update_graph(timer):
     
-    fig6 = px.line(df, x='Date', y='BNB-USD',
-                   range_y=[df['BNB-USD'].min(), df['BNB-USD'].max()],
+    fig6 = px.line(df_bnb, x='date', y='price',
+                   range_y=[df_bnb['price'].min(), df_bnb['price'].max()],
                    height=120).update_layout(margin=dict(t=0, r=0, l=0, b=20),
                                              paper_bgcolor='rgba(0,0,0,0)',
                                              plot_bgcolor='rgba(0,0,0,0)',
@@ -339,8 +363,8 @@ def update_graph(timer):
                                              showticklabels=False
                                              ))
 
-    day_start = df[df['Date'] == df['Date'].min()]['BNB-USD'].values[0]
-    day_end = df[df['Date'] == df['Date'].max()]['BNB-USD'].values[0]
+    day_start = df_eth.iloc[-2]['price']
+    day_end = df_eth.iloc[-1]['price']
 
     if day_end >= day_start:
         return fig6.update_traces(fill='tozeroy',line={'color':'green'})
@@ -358,18 +382,18 @@ def update_graph(timer):
 
 def build_graph(ticker, periods):
 
-    #df_mkt = yf.download(tickers = ticker, period = periods, interval = "1h")
-    
-    #df_mkt = df_mkt.dropna()
-    
+    # df_mkt = yf.download(tickers = ticker, period = periods, interval = "1h")
+    # df_mkt = df_mkt.dropna()
+
     if periods == '1mo':
-        df_mkt=pd.read_csv('datasets/periods_1mo.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('/content/periods_1mo.csv', header=[0,1], index_col=0)
     elif periods == '3mo':
-        df_mkt=pd.read_csv('datasets/periods_3mo.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('/content/periods_3mo.csv', header=[0,1], index_col=0)
     elif periods == '6mo':
-        df_mkt=pd.read_csv('datasets/periods_6mo.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('/content/periods_6mo.csv', header=[0,1], index_col=0)
     else:
-        df_mkt=pd.read_csv('datasets/periods_1y.csv', header=[0,1], index_col=0)
+        df_mkt=pd.read_csv('/content/periods_1y.csv', header=[0,1], index_col=0)
+
 
     fig7 = go.Figure(data=[go.Candlestick(x=df_mkt.index,
                     open=df_mkt['Open'][ticker], high=df_mkt['High'][ticker],
@@ -377,12 +401,12 @@ def build_graph(ticker, periods):
                     ])
 
     fig7.update_layout(title=f'{ticker} {periods}',
-                       font_color="white",
                        #xaxis_rangeslider_visible=False,
                        paper_bgcolor='rgba(0,0,0,0)',
                        plot_bgcolor='rgba(0,0,0,0)')
     
     return fig7  
+
 
 if __name__ =='__main__':
     app.run_server(host='127.0.0.1',port=8500, use_reloader=False)
