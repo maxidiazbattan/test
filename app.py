@@ -178,7 +178,7 @@ app.layout = dbc.Container([
     
 
 
-dcc.Interval(id='update', n_intervals=0, interval=10*6)
+dcc.Interval(id='update', n_intervals=0, interval=1000*6)
 
 ], fluid=True)
 
