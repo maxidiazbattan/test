@@ -26,8 +26,8 @@ def data_load():
     return df_btc, df_eth, df_bnb
 
 
-df = pd.read_csv('datasets/cards_tickers.csv', header=0, index_col=0)
-df = df.reset_index()
+#df = pd.read_csv('datasets/cards_tickers.csv', header=0, index_col=0)
+#df = df.reset_index()
 
 
 assets={'BTC-USD':'BTC-USD','ETH-USD':'ETH-USD','BNB-USD':'BNB-USD'}
@@ -176,7 +176,7 @@ app.layout = dbc.Container([
     
 
 
-dcc.Interval(id='update', n_intervals=0, interval=1000*5)
+dcc.Interval(id='update', n_intervals=0, interval=10*6)
 
 ], fluid=True)
 
